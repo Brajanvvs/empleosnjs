@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #ecf0f1;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    #loginForm {
+      max-width: 400px;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      text-align: center;
+    }
+    #loginForm input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    #loginForm button {
+      width: 100%;
+      background-color: #1abc9c;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    p {
+      text-align: center;
+      margin-top: 20px;
+    }
+    a {
+      color: #1abc9c;
+      text-decoration: none;
+    }
+    .logo-container {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logo-container img {
+      max-width: 150px;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo-container">
+    <img src="img/logo.png" alt="Logo">
+  </div>
+  <h2>Iniciar sesión</h2>
+  <form id="loginForm">
+    <input id="email" type="email" placeholder="Correo" required>
+    <input id="password" type="password" placeholder="Contraseña" required>
+    <button type="submit">Entrar</button>
+  </form>
+
+  <p>¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a></p>
+
+  <script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value
+    };
+
+    try {
+      const res = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      if (res.ok) {
+        // guardar usuario básico
+        const user = { id: result.user?.id || result.user?.id || null, name: result.user?.name || null, email: data.email };
+        localStorage.setItem('user', JSON.stringify(user));
+        alert(result.message || 'Login correcto');
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get('next') || '/index.html';
+        window.location.href = next;
+      } else {
+        alert(result.error || 'Error al iniciar sesión');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('No se pudo conectar con el servidor');
+    }
+  });
+  </script>
+</body>
+</html>

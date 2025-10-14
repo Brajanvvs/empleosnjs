@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Empleos</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <div id="userArea">
+      <span id="userName"></span>
+      <button id="logoutBtn" style="display:none;">Cerrar sesión</button>
+      <a id="appsLink" href="/applications.html" style="margin-left:12px; display:none;">Mis postulaciones</a>
+    </div>
+  </header>
+
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="img/logo.png" alt="Logo" style="max-width: 150px;">
+  </div>
+
+  <h1>Ofertas de empleo</h1>
+  <p style="text-align: center; color: #7f8c8d;">Habitantes del corredor ecológico</p>
+  <div style="text-align: center; margin: 40px 0;">
+    <button onclick="showInfo()" style="background-color: #1abc9c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Más información</button>
+  </div>
+  <div id="job-list"></div>
+
+  <div id="infoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center;">
+    <div style="background: white; padding: 20px; border-radius: 10px; max-width: 600px; width: 90%; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center;">
+      <h1 style="color: #1abc9c;">Información del Proyecto</h1>
+      <p style="text-align: justify;">Esta página web de gestión de empleo dirigida a los habitantes del corredor ecológico. Este proyecto surge como respuesta a la necesidad de fortalecer las oportunidades laborales dentro de la región, promoviendo la inclusión digital, la sostenibilidad económica y el aprovechamiento responsable de los recursos naturales.</p>
+      <button onclick="closeModal()" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Cerrar</button>
+    </div>
+  </div>
+
+  <footer style="text-align: center; margin-top: 20px; padding: 10px; background-color: #34495e; color: white; font-size: 14px;">
+    <p style="margin: 0; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><strong>Trabajo de Programación Web</strong></p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Mostrar usuario si está logueado
+    try {
+      const user = JSON.parse(localStorage.getItem('user')) || null;
+      if (user && user.name) {
+        document.getElementById('userName').textContent = 'Hola, ' + user.name;
+        const btn = document.getElementById('logoutBtn');
+        btn.style.display = 'inline-block';
+        btn.addEventListener('click', () => { localStorage.removeItem('user'); location.reload(); });
+        // mostrar enlace a postulaciones y contar
+        const appsLink = document.getElementById('appsLink');
+        appsLink.style.display = 'inline-block';
+        fetch(`/api/applications?user_id=${user.id}`)
+          .then(r => r.json())
+          .then(list => {
+            const n = Array.isArray(list) ? list.length : 0;
+            appsLink.textContent = `Mis postulaciones (${n})`;
+          })
+          .catch(() => { appsLink.textContent = 'Mis postulaciones'; });
+      } else {
+        document.getElementById('userName').innerHTML = '<a href="/login.html">Iniciar sesión</a> | <a href="/register">Registrarse</a>';
+      }
+    } catch (e) { console.error(e); }
+
+    function showInfo() {
+      document.getElementById('infoModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('infoModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
