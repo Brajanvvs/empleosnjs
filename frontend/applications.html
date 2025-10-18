@@ -1,56 +1,84 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mis Postulaciones - Portal de Empleos</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mis Postulaciones • Portal de Empleos</title>
+
+  <!-- Header/Footer dinámicos por rol -->
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/js/nav.js" defer></script>
+
   <style>
-    body { background:#f5f7fb; font-family: system-ui, Arial, sans-serif; margin:0; }
-    header { background:#1abc9c; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
-    header a { color:#fff; text-decoration:none; font-weight:600; }
-    .h-actions a, .h-actions button { color:#fff; text-decoration:none; font-weight:600; background:transparent; border:none; cursor:pointer; }
-    .divider { opacity:.6; margin:0 8px; }
-    main { max-width:980px; margin:28px auto; padding:0 16px; }
-    h1 { margin:0; font-size:20px; }
-    .btn { background:#1abc9c; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; }
-    .btn.ghost { background:#ecf0f1; color:#2c3e50; }
-    .list { margin: 18px 0 40px; }
-    .card { background:#fff; border:1px solid #eaeaea; border-radius:12px; box-shadow:0 8px 22px rgba(0,0,0,.05); padding:16px; margin:12px 0; }
-    .row { display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap; }
-    .meta { color:#6c7a89; font-size:13px; }
-    .pill { font-size:12px; padding:4px 10px; border-radius:999px; font-weight:700; letter-spacing:.2px; display:inline-block; }
+    :root{
+      --brand:#1abc9c;
+      --brand-2:#4bc0c8; /* azul suave */
+      --ink:#2c3e50;
+      --muted:#6c7a89;
+      --chip:#ecf0f1;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --border:#e9edf2;
+      --shadow: 0 12px 26px rgba(0,0,0,.06);
+      --radius: 14px;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+
+    /* Contenido */
+    main{ max-width:980px; margin:28px auto; padding:0 16px; }
+    h1{ margin:0 0 8px; font-size: clamp(20px,2.2vw,24px); }
+    .sub{ color:var(--muted); margin:0 0 18px; }
+
+    /* Tarjetas */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin:12px 0;
+    }
+    .row{ display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .meta{ color:var(--muted); font-size:13px; }
+    .salary{ font-weight:700; }
+
+    /* Chips/estado */
+    .pill{ font-size:12px; padding:4px 10px; border-radius:999px; font-weight:700; letter-spacing:.2px; display:inline-block; }
     .st-applied   { background:#dfe6e9; color:#2c3e50; }
     .st-reviewing { background:#f6d6a6; color:#8a5a00; }
     .st-hired     { background:#bdebd1; color:#0c6d2d; }
     .st-rejected  { background:#f5b7b1; color:#7b241c; }
-    .salary { font-weight:600; }
-    .actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .danger { background:#e74c3c; color:#fff; }
-    .muted { color:#7f8c8d; }
-    footer { text-align:center; margin-top:50px; padding:10px; background:#34495e; color:#fff; }
-    .empty { color:#7f8c8d; background:#fff; border:1px dashed #cfd8dc; border-radius:10px; padding:16px; text-align:center; }
+
+    /* Botones */
+    .btn{ background:var(--brand); color:#fff; border:none; border-radius:10px; padding:9px 12px; cursor:pointer; font-weight:700; }
+    .btn.danger{ background:#e74c3c; }
+    .btn.ghost{ background:var(--chip); color:var(--ink); }
+
+    .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    /* Vacío */
+    .empty{
+      color:#7f8c8d; background:#fff; border:1px dashed var(--border);
+      border-radius:12px; padding:18px; text-align:center; margin-top:12px;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Mis Postulaciones</h1>
-    <div class="h-actions" id="navActions">
-      <a href="/">🏠 Inicio</a>
-      <span class="divider">|</span>
-      <!-- se rellenan links según rol -->
-    </div>
-  </header>
+  <!-- Header moderno inyectado por nav.js -->
+  <header id="appHeader"></header>
 
   <main>
-    <section id="appsList" class="list">
-      <p class="muted">Cargando tus postulaciones...</p>
+    <h1>Mis Postulaciones</h1>
+    <p class="sub">Aquí puedes revisar el estado de cada postulación y cancelar si aún está en proceso.</p>
+
+    <section id="appsList">
+      <p class="meta">Cargando tus postulaciones…</p>
     </section>
   </main>
 
-  <footer>
-    <small>© Portal Empleos - Corredor Ecológico 2025</small>
-  </footer>
+  <!-- Footer moderno inyectado por nav.js -->
+  <footer id="appFooter"></footer>
 
   <script>
     const state = { user: null };
@@ -73,50 +101,6 @@
       return s === 'APPLIED' || s === 'REVIEWING';
     }
 
-    function renderHeaderLinks(user){
-      const nav = document.getElementById('navActions');
-      if (!nav) return;
-
-      // Limpia lo que hubiera después del "Inicio |"
-      nav.querySelectorAll('a[data-dyn], button[data-dyn], span[data-dyn]').forEach(n => n.remove());
-
-      if (!user){
-        const a = document.createElement('a');
-        a.href = '/login.html?next=/applications.html';
-        a.textContent = 'Iniciar sesión';
-        a.setAttribute('data-dyn','');
-        nav.appendChild(a);
-        return;
-      }
-
-      const isUser = user.role === 'USER';
-      const profileHref = isUser ? '/profile.html' : '/company-profile.html';
-      const profileText = isUser ? 'Mi perfil' : 'Perfil empresa';
-      const auxHref = isUser ? '/applications.html' : '/dashboard.html';
-      const auxText = isUser ? 'Mis postulaciones' : 'Dashboard empresa';
-
-      const div = document.createElement('span');
-      div.setAttribute('data-dyn','');
-      div.innerHTML = `
-        <span class="divider" data-dyn>|</span>
-        <a href="${profileHref}" data-dyn>${profileText}</a>
-        <span class="divider" data-dyn>|</span>
-        <a href="${auxHref}" data-dyn>${auxText}</a>
-        <span class="divider" data-dyn>|</span>
-        <button id="logoutBtn" data-dyn>Cerrar sesión</button>
-      `;
-      nav.appendChild(div);
-
-      const logoutBtn = document.getElementById('logoutBtn');
-      if (logoutBtn){
-        logoutBtn.onclick = async () => {
-          try { await fetch('/api/auth/logout', { method:'POST' }); } catch {}
-          localStorage.removeItem('user');
-          location.href = '/';
-        };
-      }
-    }
-
     async function fetchSession() {
       try {
         const r = await fetch('/api/auth/me');
@@ -135,7 +119,6 @@
           return;
         }
 
-        renderHeaderLinks(state.user);
         loadApplications();
       } catch (e) {
         console.error(e);
@@ -176,7 +159,7 @@
             </div>
             <div class="actions">
               <div>Estado: ${badge(a.status)}</div>
-              ${canCancel ? `<button class="btn danger cancel-btn" data-id="${a.application_id}">❌ Cancelar</button>` : ''}
+              ${canCancel ? `<button class="btn danger cancel-btn" data-id="${a.application_id}">Cancelar</button>` : ''}
             </div>
           </div>
         </article>

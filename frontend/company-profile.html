@@ -3,102 +3,160 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Perfil de empresa</title>
+  <title>Perfil de empresa • Portal de Empleos</title>
+
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/js/nav.js" defer></script>
+
   <style>
-    body{ font-family: system-ui, Arial, sans-serif; background:#f5f7fb; margin:0; }
-    header{ background:#1abc9c; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
-    header a{ color:#fff; text-decoration:none; font-weight:600; }
-    main{ max-width:900px; margin:28px auto; padding:0 16px; }
-    .card{ background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:18px; }
-    label{ display:block; margin:10px 0 6px; color:#2c3e50; font-weight:600; }
-    input[type="text"], input[type="url"]{ width:100%; padding:10px 12px; border:1px solid #dfe6e9; border-radius:8px; background:#fbfbfb; outline:none; }
-    input[type="file"]{ margin-top:8px; }
-    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
-    .actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
-    .btn{ background:#1abc9c; color:#fff; border:none; border-radius:8px; padding:10px 12px; cursor:pointer; font-weight:600; }
-    .ghost{ background:#ecf0f1; color:#2c3e50; }
-    .muted{ color:#7f8c8d; }
-    .logo{ width:96px;height:96px;object-fit:cover;border-radius:12px;border:1px solid #eee;background:#fff; }
-    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px; }
-    @media (max-width:800px){ .row3{ grid-template-columns: 1fr; } }
+    :root{
+      --brand:#1abc9c;
+      --brand-2:#4bc0c8;
+      --bg:#f5f7fb;
+      --card:#fff;
+      --ink:#243040;
+      --muted:#6c7a89;
+      --chip:#eef3f7;
+      --border:#e6ecf3;
+      --shadow:0 16px 32px rgba(0,0,0,.06);
+      --radius:14px;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1020; --card:#141a2f; --ink:#e6e9f2; --muted:#b7bfd9; --border:#1e2745; --chip:#1a2446; --shadow:none;
+      }
+    }
+
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+
+    main{ max-width:980px; margin:28px auto; padding:0 16px; }
+    h1{ margin:0 0 6px; font-size: clamp(20px,2.4vw,26px); }
+    .sub{ margin:0 0 16px; color:var(--muted); }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap:18px;
+    }
+    @media (max-width:900px){ .grid{ grid-template-columns: 1fr; } }
+
+    .field{ margin-bottom:12px; }
+    label{ display:block; margin:0 0 6px; font-weight:700; color:var(--ink); }
+    input[type="text"], input[type="url"]{
+      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px;
+      background:#fbfbfb; outline:none; transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    input[type="text"]:focus, input[type="url"]:focus{
+      border-color:var(--brand); background:#fff; box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent);
+    }
+
+    .row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    @media (max-width:700px){ .row3{ grid-template-columns:1fr; } }
+
+    .logo-wrap{
+      border:1px dashed var(--border);
+      border-radius:12px;
+      background:#fafcff;
+      display:grid; place-items:center;
+      height:170px; overflow:hidden;
+    }
+    .logo-wrap img{ width:100%; height:100%; object-fit:contain; background:#fff; }
+
+    .hint{ color:var(--muted); font-size:12px; }
+    .muted{ color:var(--muted); }
+    .msg{ margin-top:6px; font-size:13px; color:var(--muted); }
+
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .btn{ background:var(--brand); color:#fff; border:none; border-radius:10px; padding:10px 12px; font-weight:800; cursor:pointer; }
+    .btn:hover{ filter:brightness(.95); }
+    .btn.ghost{ background:var(--chip); color:var(--ink); }
+    .btn.secondary{ background:var(--brand-2); color:#fff; }
   </style>
 </head>
 <body>
-  <header>
-    <a href="/">← Volver</a>
-    <div id="navRight"></div>
-  </header>
+  <!-- Header inyectado por nav.js -->
+  <header id="appHeader"></header>
 
   <main>
+    <h1>Perfil de empresa</h1>
+    <p class="sub">Actualiza la información que verán los candidatos en tus ofertas.</p>
+
     <section class="card">
-      <h2 style="margin:0 0 10px">Perfil de empresa</h2>
-
-      <div class="row3">
+      <div class="grid">
+        <!-- Columna izquierda: datos -->
         <div>
-          <label>Nombre de la empresa</label>
-          <input id="name" type="text" placeholder="Mi Empresa SAS" />
-        </div>
-        <div>
-          <label>NIT</label>
-          <input id="nit" type="text" placeholder="900123456-7" />
-        </div>
-        <div>
-          <label>Ubicación</label>
-          <input id="location" type="text" placeholder="Villavicencio" />
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:6px;">
-        <div>
-          <label>Sitio web</label>
-          <input id="website" type="url" placeholder="https://miempresa.co" />
-        </div>
-        <div>
-          <label>Logo</label>
-          <div style="display:flex;gap:10px;align-items:center;">
-            <img id="logoPreview" class="logo" src="/img/company-placeholder.png" alt="Logo" />
-            <input id="logoFile" type="file" accept="image/*" />
+          <div class="row3">
+            <div class="field">
+              <label for="name">Nombre de la empresa</label>
+              <input id="name" type="text" placeholder="Mi Empresa SAS" />
+            </div>
+            <div class="field">
+              <label for="nit">NIT</label>
+              <input id="nit" type="text" placeholder="900123456-7" />
+            </div>
+            <div class="field">
+              <label for="location">Ubicación</label>
+              <input id="location" type="text" placeholder="Villavicencio" />
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div class="actions">
-        <button id="saveBtn" class="btn">Guardar</button>
-        <button id="uploadLogoBtn" class="btn">Subir/Actualizar logo</button>
-        <a class="ghost btn" href="/dashboard.html">Ir al dashboard</a>
+          <div class="row3" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="field" style="grid-column:1 / -1;">
+              <label for="website">Sitio web</label>
+              <input id="website" type="url" placeholder="https://miempresa.co" />
+              <div class="hint">Opcional. Se mostrará en el detalle del empleo.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="saveBtn" class="btn">Guardar cambios</button>
+            <a href="/dashboard.html" class="btn ghost">Ir al dashboard</a>
+          </div>
+          <div id="formMsg" class="msg"></div>
+        </div>
+
+        <!-- Columna derecha: logo -->
+        <div>
+          <label>Logo de la empresa</label>
+          <div class="logo-wrap" id="logoBox">
+            <img id="logoPreview" src="/img/company-placeholder.png" alt="Logo" />
+          </div>
+          <div class="actions" style="margin-top:10px;">
+            <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp" />
+            <button id="uploadLogoBtn" class="btn secondary">Subir/Actualizar logo</button>
+          </div>
+          <div class="hint">Formatos: JPG/PNG/WEBP. Recom. máx 2–3 MB.</div>
+          <div id="logoMsg" class="msg"></div>
+        </div>
       </div>
     </section>
   </main>
 
+  <!-- Footer inyectado por nav.js -->
+  <footer id="appFooter"></footer>
+
   <script>
     const $ = s => document.querySelector(s);
     const PLACEHOLDER = '/img/company-placeholder.png';
-    let me = null, company = null;
+    let me = null, company = null, previewURL = null;
 
-    function renderHeader(){
-      const box = $('#navRight');
-      if (!me){
-        box.innerHTML = '<a href="/login.html">Iniciar sesión</a>';
-        return;
-      }
-      box.innerHTML = `
-        <span>${me.name || ''} · ${me.role || ''}</span>
-        <span style="opacity:.6;margin:0 8px;">|</span>
-        <a href="/dashboard.html">Dashboard empresa</a>
-        <span style="opacity:.6;margin:0 8px;">|</span>
-        <button id="logoutBtn" class="ghost btn">Cerrar sesión</button>
-      `;
-      $('#logoutBtn').onclick = async () => {
-        try{ await fetch('/api/auth/logout',{method:'POST'});}catch{}
-        localStorage.removeItem('user');
-        location.href = '/';
-      };
-    }
+    const setFormMsg = (t='') => $('#formMsg').textContent = t;
+    const setLogoMsg = (t='') => $('#logoMsg').textContent = t;
 
+    // ===== Auth (solo EMPLOYER) =====
     async function loadMe(){
       const r = await fetch('/api/auth/me');
-      const j = await r.json();
-      me = j.user || null;
+      const j = await r.json().catch(()=>({}));
+      me = j?.user || null;
       if (!me){
         location.href = '/login.html?next=/company-profile.html';
         return;
@@ -106,21 +164,27 @@
       if (me.role !== 'EMPLOYER'){
         alert('Esta página es solo para empresas.');
         location.href = '/';
-        return;
       }
-      renderHeader();
     }
 
+    // ===== Cargar/Render empresa =====
     async function loadCompany(){
-      const r = await fetch('/api/companies/me');
-      const j = await r.json();
-      if (!j.ok) { alert(j.msg || 'No se pudo cargar empresa'); return; }
-      company = j.company;
-      $('#name').value = company.name || '';
-      $('#nit').value = company.nit || '';
-      $('#website').value = company.website || '';
-      $('#location').value = company.location || '';
-      $('#logoPreview').src = company.logo_url || PLACEHOLDER;
+      try{
+        const r = await fetch('/api/companies/me');
+        const j = await r.json().catch(()=>({}));
+        if (!r.ok) throw new Error(j?.msg || 'No se pudo cargar empresa');
+
+        company = j?.company || null;
+        $('#name').value = company?.name || '';
+        $('#nit').value = company?.nit || '';
+        $('#website').value = company?.website || '';
+        $('#location').value = company?.location || '';
+        $('#logoPreview').src = company?.logo_url || PLACEHOLDER;
+        setFormMsg('');
+      }catch(e){
+        console.error('loadCompany error:', e);
+        setFormMsg('No se pudo cargar la empresa.');
+      }
     }
 
     async function saveCompany(){
@@ -130,34 +194,66 @@
         website: $('#website').value.trim(),
         location: $('#location').value.trim()
       };
-      const r = await fetch('/api/companies/me', {
-        method: 'PATCH',
-        headers: { 'Content-Type':'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const j = await r.json();
-      if (r.ok) alert('Empresa actualizada');
-      else alert(j.msg || 'Error al actualizar');
-    }
-
-    async function uploadLogo(){
-      const f = $('#logoFile').files?.[0];
-      if (!f) return alert('Adjunta una imagen');
-      const fd = new FormData();
-      fd.append('logo', f);
-      const r = await fetch('/api/companies/me/logo', { method:'POST', body: fd });
-      const j = await r.json();
-      if (r.ok){
-        $('#logoPreview').src = j.logo_url || PLACEHOLDER;
-        alert('Logo subido');
-      } else {
-        alert(j.msg || j.error || 'Error al subir logo');
+      if (!payload.name){
+        setFormMsg('El nombre de la empresa es obligatorio.');
+        return;
+      }
+      setFormMsg('Guardando…');
+      try{
+        const r = await fetch('/api/companies/me', {
+          method:'PATCH',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const j = await r.json().catch(()=>({}));
+        if (!r.ok) throw new Error(j?.msg || 'Error al actualizar');
+        setFormMsg('Empresa actualizada ✅');
+      }catch(e){
+        console.error(e);
+        setFormMsg('No se pudo guardar. Intenta de nuevo.');
       }
     }
 
+    // ===== Logo: preview + subir =====
+    $('#logoFile').addEventListener('change', (e) => {
+      const f = e.target.files?.[0];
+      if (!f){ setLogoMsg(''); return; }
+      if (previewURL) URL.revokeObjectURL(previewURL);
+      previewURL = URL.createObjectURL(f);
+      $('#logoPreview').src = previewURL;
+      setLogoMsg('Vista previa lista. Pulsa “Subir/Actualizar logo” para guardar.');
+    });
+
+    async function uploadLogo(){
+      const f = $('#logoFile').files?.[0];
+      if (!f) { setLogoMsg('Adjunta una imagen primero.'); return; }
+
+      const fd = new FormData();
+      fd.append('logo', f);
+      setLogoMsg('Subiendo logo…');
+
+      try{
+        const r = await fetch('/api/companies/me/logo', { method:'POST', body: fd });
+        const j = await r.json().catch(()=>({}));
+        if (!r.ok) throw new Error(j?.msg || j?.error || 'No se pudo subir');
+
+        // cache-busting para ver el nuevo logo al instante
+        const url = (j?.logo_url || PLACEHOLDER) + '?t=' + Date.now();
+        $('#logoPreview').src = url;
+        if (previewURL){ URL.revokeObjectURL(previewURL); previewURL = null; }
+        $('#logoFile').value = '';
+        setLogoMsg('Logo actualizado ✅');
+      }catch(e){
+        console.error('uploadLogo error:', e);
+        setLogoMsg('Error al subir el logo.');
+      }
+    }
+
+    // Eventos
     $('#saveBtn').addEventListener('click', saveCompany);
     $('#uploadLogoBtn').addEventListener('click', uploadLogo);
 
+    // Init
     (async function init(){
       await loadMe();
       await loadCompany();

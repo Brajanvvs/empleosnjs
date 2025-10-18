@@ -1,93 +1,119 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Portal de Empleos</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/js/nav.js" defer></script>
   <style>
-    /* Pequeño estilo para el buscador */
+    :root{
+      --brand:#1abc9c;
+      --brand-2:#4bc0c8; /* azul verdoso suave */
+      --ink:#2c3e50;
+      --muted:#6c7a89;
+      --chip:#ecf0f1;
+      --card:#ffffff;
+      --bg:#f5f7fb;
+    }
+    body{ background:var(--bg); color:var(--ink); margin:0; font-family:system-ui, Arial, sans-serif; }
+    /* Hero */
+    .hero{
+      max-width:1100px; margin:22px auto 10px; padding:0 16px;
+      display:grid; grid-template-columns:1.2fr .8fr; gap:18px; align-items:center;
+    }
+    .hero .title{ margin:0; font-size:clamp(22px, 2.4vw, 30px); }
+    .hero .subtitle{ color:var(--muted); margin:.3rem 0 0; }
+    .brand-card{
+      background:linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
+      color:#fff; border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px;
+      box-shadow:0 12px 26px rgba(0,0,0,.08);
+    }
+    .brand-card img{ width:60px; height:60px; border-radius:12px; object-fit:cover; background:#fff; }
+    .brand-card small{ opacity:.95 }
+    @media (max-width:900px){ .hero{ grid-template-columns:1fr; } }
+
+    /* Search bar */
     .search-bar{
-      max-width: 900px;
-      margin: 16px auto 28px;
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 8px;
-      padding: 0 12px;
+      max-width: 960px; margin:12px auto 18px; padding:0 16px;
+      display:grid; grid-template-columns: 1fr auto auto; gap:8px;
     }
     .search-bar input{
-      padding: 10px 12px;
-      border: 1px solid #dfe6e9;
-      border-radius: 8px;
-      outline: none;
+      padding:11px 12px; border:1px solid #dfe6e9; border-radius:10px; outline:none; background:#fff;
     }
-    .search-bar button{
-      background: #1abc9c;
-      color: #fff;
-      border: none;
-      padding: 10px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .search-bar button.ghost{
-      background: #ecf0f1;
-      color: #2c3e50;
-    }
+    .btn{ background:var(--brand); color:#fff; border:none; border-radius:10px; padding:10px 12px; cursor:pointer; font-weight:700; }
+    .btn.ghost{ background:#ecf0f1; color:#2c3e50; }
+
+    /* Jobs list container */
+    .container{ max-width:960px; margin:0 auto; padding:0 16px 24px; }
+    /* Paginador */
+    #pager{ display:none; max-width:960px; margin:8px auto 28px; padding:0 16px; }
+    /* Modal simple */
+    #infoModal{ display:none; position:fixed; inset:0; background-color:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; }
+    #infoModal .card{ background:#fff; padding:18px; border-radius:12px; max-width:620px; width:92%; box-shadow:0 14px 32px rgba(0,0,0,.18); text-align:center; }
   </style>
 </head>
 <body>
-  <header>
-    <div id="userArea">
-      <span id="userName"></span>
-      <button id="logoutBtn" style="display:none;">Cerrar sesión</button>
-      <a id="appsLink" href="/applications.html" style="margin-left:12px; display:none;">Mis postulaciones</a>
+  <!-- Header moderno, lo rellena nav.js -->
+  <header id="appHeader"></header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div>
+      <h1 class="title">Ofertas de empleo</h1>
+      <p class="subtitle">Para habitantes del corredor ecológico Villavicencio Meta</p>
     </div>
-  </header>
-
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="img/logo.png" alt="Logo" style="max-width: 150px;">
-  </div>
-
-  <h1 style="text-align:center;">Ofertas de empleo</h1>
-  <p style="text-align: center; color: #7f8c8d;">Habitantes del corredor ecológico</p>
+    <div class="brand-card">
+      <img src="/img/logo.png" alt="Logo" />
+      <div>
+        <strong>Portal de Empleos</strong><br>
+        <small>Oportunidades locales, impacto real.</small>
+      </div>
+    </div>
+  </section>
 
   <!-- Buscador -->
   <div class="search-bar">
-    <input id="q" type="search" placeholder="Buscar por título, descripción o empresa…">
-    <button id="searchBtn">Buscar</button>
-    <button id="clearBtn" class="ghost">Limpiar</button>
+    <input id="q" type="search" placeholder="Buscar por título, descripción o empresa…" />
+    <button id="searchBtn" class="btn">Buscar</button>
+    <button id="clearBtn" class="btn ghost">Limpiar</button>
   </div>
 
-  <div style="text-align: center; margin: 20px 0;">
-    <button onclick="showInfo()" style="background-color: #1abc9c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Más información</button>
+  <!-- CTA info -->
+  <div class="container" style="text-align:center; margin-bottom:10px;">
+    <button class="btn" onclick="document.getElementById('infoModal').style.display='flex'">Más información</button>
   </div>
 
-  <div id="job-list"></div>
+  <!-- Listado -->
+  <div class="container">
+    <div id="job-list"></div>
+  </div>
 
-    <!-- Paginador de resultados de búsqueda -->
-  <div id="pager" style="display:none; max-width:900px; margin:12px auto; padding:0 12px;">
+  <!-- Paginador -->
+  <div id="pager">
     <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
-      <button id="prevBtn" style="background:#ecf0f1;color:#2c3e50;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;">← Anterior</button>
-      <span id="pageInfo" style="color:#6c7a89;font-size:13px;">&nbsp;</span>
-      <button id="nextBtn" style="background:#1abc9c;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;">Siguiente →</button>
+      <button id="prevBtn" class="btn ghost">← Anterior</button>
+      <span id="pageInfo" style="color:var(--muted); font-size:13px;">&nbsp;</span>
+      <button id="nextBtn" class="btn">Siguiente →</button>
     </div>
   </div>
 
-
-  <div id="infoModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center;">
-    <div style="background: white; padding: 20px; border-radius: 10px; max-width: 600px; width: 90%; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center;">
-      <h1 style="color: #1abc9c;">Información del Proyecto</h1>
-      <p style="text-align: justify;">Esta página web de gestión de empleo dirigida a los habitantes del corredor ecológico. Este proyecto surge como respuesta a la necesidad de fortalecer las oportunidades laborales dentro de la región, promoviendo la inclusión digital, la sostenibilidad económica y el aprovechamiento responsable de los recursos naturales.</p>
-      <button onclick="closeModal()" style="background-color: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 20px;">Cerrar</button>
+  <!-- Modal info -->
+  <div id="infoModal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="card">
+      <h2 style="color:var(--brand); margin-top:0;">Información del Proyecto</h2>
+      <p style="text-align:justify; color:var(--ink);">
+        Plataforma de gestión de empleo para el corredor ecológico, orientada a mejorar las oportunidades
+        laborales, la inclusión digital y la sostenibilidad económica de la región.
+      </p>
+      <button class="btn ghost" onclick="document.getElementById('infoModal').style.display='none'">Cerrar</button>
     </div>
   </div>
 
-  <footer style="text-align: center; margin-top: 20px; padding: 10px; background-color: #34495e; color: white; font-size: 14px;">
-    <p style="margin: 0; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"><strong>Trabajo de Programación Web</strong></p>
-  </footer>
+  <!-- Footer moderno, lo rellena nav.js -->
+  <footer id="appFooter"></footer>
 
-  <script src="js/main.js"></script>
-
+  <!-- Tu lógica existente -->
+  <script src="/js/main.js"></script>
 </body>
 </html>

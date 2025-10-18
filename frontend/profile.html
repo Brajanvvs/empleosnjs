@@ -4,93 +4,140 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mi perfil</title>
+
+  <!-- Header/Footer dinámicos por rol -->
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/js/nav.js" defer></script>
+
   <style>
-    body{ font-family: system-ui, Arial, sans-serif; background:#f5f7fb; margin:0; }
-    header{ background:#1abc9c; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
-    header a{ color:#fff; text-decoration:none; font-weight:600; }
-    main{ max-width:900px; margin:28px auto; padding:0 16px; }
-    .card{ background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:18px; }
-    label{ display:block; margin:10px 0 6px; color:#2c3e50; font-weight:600; }
-    input[type="text"], input[type="email"]{ width:100%; padding:10px 12px; border:1px solid #dfe6e9; border-radius:8px; background:#fbfbfb; outline:none; }
+    :root{
+      --brand:#1abc9c;
+      --brand-2:#4bc0c8; /* azul suave */
+      --ink:#2c3e50;
+      --muted:#6c7a89;
+      --chip:#ecf0f1;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --border:#e9edf2;
+      --shadow: 0 12px 26px rgba(0,0,0,.06);
+      --radius: 14px;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+
+    /* Contenedor */
+    main{ max-width:960px; margin:26px auto; padding:0 16px; }
+
+    /* Card */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    /* Títulos */
+    h2{ margin:0 0 10px; font-size:clamp(20px, 2.2vw, 24px); }
+    h3{ margin:0 0 8px; font-size:18px; }
+
+    /* Inputs */
+    label{ display:block; margin:10px 0 6px; color:var(--ink); font-weight:600; }
+    input[type="text"], input[type="email"]{
+      width:100%; padding:11px 12px; border:1px solid #dfe6e9; border-radius:10px;
+      background:#fff; outline:none;
+    }
+    input[type="text"]:focus, input[type="email"]:focus{ border-color:var(--brand); }
+
     input[type="file"]{ margin-top:8px; }
+
+    /* Layout */
     .row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+    @media (max-width:760px){ .row{ grid-template-columns: 1fr; } }
+
+    /* Botones */
     .actions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
-    .btn{ background:#1abc9c; color:#fff; border:none; border-radius:8px; padding:10px 12px; cursor:pointer; font-weight:600; }
-    .ghost{ background:#ecf0f1; color:#2c3e50; }
-    .muted{ color:#7f8c8d; }
-    .pill{ background:#ecf0f1; border-radius:999px; padding:4px 10px; font-size:12px; }
+    .btn{
+      background:var(--brand); color:#fff; border:none; border-radius:10px;
+      padding:10px 14px; cursor:pointer; font-weight:700;
+    }
+    .btn.ghost{ background:var(--chip); color:var(--ink); }
+
+    /* Chips/estado */
+    .muted{ color:var(--muted); }
+    .pill{ background:var(--chip); border-radius:999px; padding:4px 10px; font-size:12px; display:inline-block; }
+
+    /* Secciones */
+    .split{
+      display:grid; grid-template-columns: 1.2fr .8fr; gap:18px; align-items:start;
+    }
+    @media (max-width:980px){ .split{ grid-template-columns:1fr; } }
+
+    /* Bloque CV */
+    .cvbox{ border:1px dashed var(--border); background:#fff; border-radius:12px; padding:12px; }
   </style>
 </head>
 <body>
-  <header>
-    <a href="/">← Volver</a>
-    <div id="navRight"></div>
-  </header>
+  <!-- Header moderno inyectado por nav.js -->
+  <header id="appHeader"></header>
 
   <main>
-    <section class="card">
-      <h2 style="margin:0 0 10px">Mi perfil</h2>
+    <div class="split">
+      <!-- Datos básicos -->
+      <section class="card">
+        <h2>Mi perfil</h2>
 
-      <div class="row">
-        <div>
-          <label>Nombre</label>
-          <input id="name" type="text" placeholder="Tu nombre" />
+        <div class="row">
+          <div>
+            <label>Nombre</label>
+            <input id="name" type="text" placeholder="Tu nombre" />
+          </div>
+          <div>
+            <label>Correo</label>
+            <input id="email" type="email" disabled />
+          </div>
         </div>
-        <div>
-          <label>Correo</label>
-          <input id="email" type="email" disabled />
+
+        <div class="actions">
+          <button id="saveBtn" class="btn">Guardar</button>
+          <a class="btn ghost" href="/applications.html">Mis postulaciones</a>
         </div>
-      </div>
+      </section>
 
-      <div class="actions">
-        <button id="saveBtn" class="btn">Guardar</button>
-      </div>
+      <!-- CV -->
+      <section class="card">
+        <h3>Hoja de vida (PDF)</h3>
+        <p class="muted" style="margin-top:0">Sube tu CV para que las empresas lo puedan consultar.</p>
 
-      <hr style="margin:18px 0; border:none; border-top:1px solid #eee" />
+        <div id="cvBox" class="cvbox muted">No has subido un CV aún.</div>
 
-      <div>
-        <h3 style="margin:0 0 6px">Hoja de vida (PDF)</h3>
-        <div id="cvBox" class="muted">No has subido un CV aún.</div>
-        <input id="cvFile" type="file" accept="application/pdf" />
+        <div style="margin-top:10px;">
+          <label class="muted" for="cvFile">Seleccionar archivo PDF</label>
+          <input id="cvFile" type="file" accept="application/pdf" />
+        </div>
+
         <div class="actions">
           <button id="uploadCvBtn" class="btn">Subir/Actualizar PDF</button>
+          <button class="btn ghost" type="button" onclick="document.getElementById('cvFile').value=''">Limpiar selección</button>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
+
+  <!-- Footer moderno inyectado por nav.js -->
+  <footer id="appFooter"></footer>
 
   <script>
     const $ = s => document.querySelector(s);
     let me = null;
-
-    function renderHeader(){
-      const box = $('#navRight');
-      if (!me){
-        box.innerHTML = '<a href="/login.html">Iniciar sesión</a>';
-        return;
-      }
-      box.innerHTML = `
-        <span>${me.name || ''} · ${me.role || ''}</span>
-        <span style="opacity:.6;margin:0 8px;">|</span>
-        <a href="/applications.html">Mis postulaciones</a>
-        <span style="opacity:.6;margin:0 8px;">|</span>
-        <button id="logoutBtn" class="ghost btn">Cerrar sesión</button>
-      `;
-      $('#logoutBtn').onclick = async () => {
-        try{ await fetch('/api/auth/logout',{method:'POST'});}catch{}
-        localStorage.removeItem('user');
-        location.href = '/';
-      };
-    }
 
     async function loadMe(){
       const r = await fetch('/api/users/me');
       const j = await r.json();
       if (!j.ok) throw new Error('sesión');
       me = j.user;
-      renderHeader();
 
-      // Solo USER debe entrar aquí
+      // Solo USER
       if (me.role !== 'USER'){
         alert('Esta página es solo para usuarios postulantes.');
         location.href = '/dashboard.html';
@@ -105,8 +152,10 @@
     function renderCV(url){
       const box = $('#cvBox');
       if (url){
+        box.classList.remove('muted');
         box.innerHTML = `Tu CV: <a href="${url}" target="_blank" class="pill">Ver PDF</a>`;
       } else {
+        box.classList.add('muted');
         box.textContent = 'No has subido un CV aún.';
       }
     }
@@ -127,6 +176,7 @@
     async function uploadCV(){
       const f = $('#cvFile').files?.[0];
       if (!f) return alert('Adjunta un PDF');
+      if (f.type !== 'application/pdf') return alert('El archivo debe ser PDF');
       const fd = new FormData();
       fd.append('resume', f);
       const r = await fetch('/api/users/me/resume', { method:'POST', body: fd });
@@ -134,6 +184,7 @@
       if (r.ok){
         renderCV(j.resume_url);
         alert('CV subido');
+        $('#cvFile').value = '';
       } else {
         alert(j.msg || j.error || 'Error al subir CV');
       }
@@ -143,7 +194,8 @@
     $('#uploadCvBtn').addEventListener('click', uploadCV);
 
     (async function init(){
-      try { await loadMe(); } catch { location.href = '/login.html?next=/profile.html'; }
+      try { await loadMe(); }
+      catch { location.href = '/login.html?next=/profile.html'; }
     })();
   </script>
 </body>

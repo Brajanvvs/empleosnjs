@@ -4,110 +4,189 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin • Portal Empleos</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+
+  <!-- Header/Footer dinámicos por rol -->
+  <script src="/js/nav.js" defer></script>
+
   <style>
-    body { font-family: system-ui, Arial, sans-serif; background:#f5f7fb; margin:0; }
-    header { background:#34495e; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
-    header a { color:#fff; text-decoration:none; font-weight:600; }
-    main { max-width:1100px; margin:28px auto; padding:0 16px; }
-    h2 { margin:8px 0 12px; color:#2c3e50; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
-    @media (max-width:900px){ .grid { grid-template-columns: 1fr; } }
-    .card { background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:16px; }
-    .kpi { display:flex; gap:10px; flex-wrap:wrap; }
-    .pill { background:#ecf0f1; border-radius:999px; padding:6px 10px; font-weight:600; }
-    table { width:100%; border-collapse: collapse; }
-    th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
-    select, button { padding:8px 10px; border-radius:8px; border:1px solid #dfe6e9; background:#fff; cursor:pointer; }
-    button.primary { background:#1abc9c; color:#fff; border:none; }
-    .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
-    .muted{ color:#7f8c8d; }
+    :root{
+      --brand:#1abc9c;
+      --brand-2:#4bc0c8;
+      --ink:#243040;
+      --muted:#6c7a89;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+      --chip:#eef3f7;
+      --border:#e6ecf3;
+      --shadow:0 16px 32px rgba(0,0,0,.06);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui, Arial, sans-serif;background:var(--bg);color:var(--ink)}
+
+    /* Layout */
+    main{max-width:1180px;margin:28px auto;padding:0 16px}
+    h1,h2{margin:0 0 10px}
+    h2{font-size:clamp(18px,2.2vw,22px)}
+    .sub{margin:-6px 0 18px;color:var(--muted)}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    /* KPI chips */
+    .kpi{display:flex;gap:10px;flex-wrap:wrap}
+    .pill{
+      background:var(--chip);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:700;
+      letter-spacing:.2px;
+      color:var(--ink);
+    }
+
+    /* Toolbar & buttons */
+    .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 12px;flex-wrap:wrap}
+    select, button{
+      padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer
+    }
+    button.primary{background:var(--brand);border:none;color:#fff;font-weight:800}
+    button.ghost{background:var(--chip);color:var(--ink)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+
+    /* Tabla responsiva */
+    .table-wrap{
+      width:100%;
+      overflow-x:auto;
+      border:1px solid var(--border);
+      border-radius:12px;
+    }
+    table{width:100%;border-collapse:separate;border-spacing:0;background:#fff}
+    thead th{
+      position:sticky;top:0;background:#f7fbff;border-bottom:1px solid var(--border);
+      text-align:left;padding:10px;font-size:13px;color:var(--muted);
+    }
+    tbody td{border-bottom:1px solid var(--border);padding:10px;font-size:14px}
+    tbody tr:hover{background:#fcfefe}
+    .status-badge{
+      display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;
+      border:1px solid var(--border);background:var(--chip)
+    }
+
+    /* Paginación */
+    .pager{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px;flex-wrap:wrap}
+    #pageInfo{color:var(--muted);font-size:13px}
+
+    /* Helpers */
+    .muted{color:var(--muted)}
   </style>
 </head>
 <body>
-  <header>
-    <a href="/">← Portal</a>
-    <div>
-      <span id="who"></span>
-      <button id="logoutBtn">Cerrar sesión</button>
-    </div>
-  </header>
+  <!-- Header moderno inyectado por nav.js -->
+  <header id="appHeader"></header>
 
   <main>
     <section class="card">
-      <h2>Métricas</h2>
+      <h2>Panel de administración</h2>
+      <p class="sub">Resumen del portal y gestión de postulaciones.</p>
       <div id="kpis" class="kpi muted">Cargando…</div>
     </section>
 
     <section class="card" style="margin-top:18px;">
       <h2>Postulaciones</h2>
+
       <div class="toolbar">
-        <label>Estado:
-          <select id="statusFilter">
-            <option value="">Todas</option>
-            <option>APPLIED</option>
-            <option>ACCEPTED</option>
-            <option>REJECTED</option>
-            <option>HIRED</option>
-          </select>
-        </label>
+        <label for="statusFilter" class="muted">Estado:</label>
+        <select id="statusFilter">
+          <option value="">Todas</option>
+          <option value="APPLIED">APPLIED</option>
+          <option value="ACCEPTED">ACCEPTED</option>
+          <option value="REJECTED">REJECTED</option>
+          <option value="HIRED">HIRED</option>
+        </select>
         <button id="refreshBtn" class="primary">Actualizar</button>
+        <span id="appsInfo" class="muted" style="margin-left:auto"></span>
       </div>
 
-      <div class="muted" id="appsInfo"></div>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Correo</th>
-            <th>Empleo</th>
-            <th>Empresa</th>
-            <th>Fecha</th>
-            <th>Estado</th>
-            <th>Acción</th>
-          </tr>
-        </thead>
-        <tbody id="appsBody">
-          <tr><td colspan="8" class="muted">Cargando…</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Correo</th>
+              <th>Empleo</th>
+              <th>Empresa</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th style="min-width:220px">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="appsBody">
+            <tr><td colspan="8" class="muted">Cargando…</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-      <div class="toolbar" style="justify-content:space-between; margin-top:10px;">
-        <button id="prevBtn">← Anterior</button>
-        <span id="pageInfo" class="muted"></span>
+      <div class="pager">
+        <button id="prevBtn" class="ghost">← Anterior</button>
+        <span id="pageInfo">&nbsp;</span>
         <button id="nextBtn" class="primary">Siguiente →</button>
       </div>
     </section>
   </main>
 
+  <!-- Footer moderno inyectado por nav.js -->
+  <footer id="appFooter"></footer>
+
   <script>
     const state = { user:null, limit:20, offset:0, lastCount:0 };
-
     const $ = s => document.querySelector(s);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
 
     async function me(){
-      const r = await fetch('/api/auth/me'); const d = await r.json();
-      state.user = d.user || null;
-      if (!state.user || state.user.role !== 'ADMIN'){
-        alert('Solo ADMIN puede entrar aquí.');
-        location.href = '/';
-        return;
+      try{
+        const r = await fetch('/api/auth/me');
+        if(!r.ok){ throw new Error('No autorizado'); }
+        const d = await r.json();
+        state.user = d.user || null;
+        if (!state.user || state.user.role !== 'ADMIN'){
+          alert('Solo ADMIN puede entrar aquí.');
+          location.href = '/';
+          return;
+        }
+      }catch(e){
+        alert('Sesión inválida. Inicia sesión.');
+        location.href = '/login.html';
       }
-      $('#who').textContent = state.user.name || 'Admin';
-      $('#logoutBtn').onclick = async () => { try{ await fetch('/api/auth/logout',{method:'POST'}) }catch{}; location.href='/'; };
+      // El header/logout lo maneja nav.js según el rol.
     }
 
     async function loadMetrics(){
       $('#kpis').textContent = 'Cargando…';
-      const r = await fetch('/api/admin/metrics'); const d = await r.json();
-      if (!d.ok){ $('#kpis').textContent = 'Error cargando métricas'; return; }
-      const m = d.metrics;
-      $('#kpis').innerHTML = `
-        <span class="pill">Usuarios: ${m.users}</span>
-        <span class="pill">Empresas: ${m.companies}</span>
-        <span class="pill">Empleos: ${m.jobs}</span>
-        <span class="pill">Postulaciones: ${m.apps}</span>
-      `;
+      try{
+        const r = await fetch('/api/admin/metrics');
+        if(!r.ok){ $('#kpis').textContent = 'Error cargando métricas'; return; }
+        const d = await r.json();
+        const m = d.metrics || d; // por si el backend no envía {ok:true}
+        if (!m){ $('#kpis').textContent = 'Sin datos'; return; }
+        $('#kpis').innerHTML = `
+          <span class="pill">Usuarios: ${esc(m.users)}</span>
+          <span class="pill">Empresas: ${esc(m.companies)}</span>
+          <span class="pill">Empleos: ${esc(m.jobs)}</span>
+          <span class="pill">Postulaciones: ${esc(m.apps)}</span>
+        `;
+      }catch(e){
+        $('#kpis').textContent = 'Error cargando métricas';
+      }
     }
 
     async function loadApps(){
@@ -119,66 +198,88 @@
       if (status) params.set('status', status);
 
       $('#appsBody').innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
-      const r = await fetch(`/api/admin/applications?${params.toString()}`);
-      const d = await r.json();
-      const apps = d.applications || [];
-      state.lastCount = apps.length;
+      try{
+        const r = await fetch(`/api/admin/applications?${params.toString()}`);
+        if(!r.ok){ throw new Error('Error al cargar'); }
+        const d = await r.json();
+        const apps = d.applications || d || [];
+        state.lastCount = apps.length;
 
-      if (!apps.length){
-        $('#appsBody').innerHTML = `<tr><td colspan="8" class="muted">Sin resultados</td></tr>`;
-      } else {
-        $('#appsBody').innerHTML = apps.map(a => `
-          <tr>
-            <td>${a.id}</td>
-            <td>${a.applicant_name || '—'}</td>
-            <td>${a.applicant_email || '—'}</td>
-            <td>#${a.job_id} · ${a.title}</td>
-            <td>${a.company}</td>
-            <td>${new Date(a.created_at).toLocaleString()}</td>
-            <td><b>${a.status}</b></td>
-            <td>
-              <select data-id="${a.id}" class="statusSel">
-                <option ${a.status==='APPLIED'?'selected':''}>APPLIED</option>
-                <option ${a.status==='ACCEPTED'?'selected':''}>ACCEPTED</option>
-                <option ${a.status==='REJECTED'?'selected':''}>REJECTED</option>
-                <option ${a.status==='HIRED'?'selected':''}>HIRED</option>
-              </select>
-              <button class="primary updBtn" data-id="${a.id}" style="margin-left:6px;">Guardar</button>
-            </td>
-          </tr>
-        `).join('');
-      }
+        if (!apps.length){
+          $('#appsBody').innerHTML = `<tr><td colspan="8" class="muted">Sin resultados</td></tr>`;
+        } else {
+          $('#appsBody').innerHTML = apps.map(a => `
+            <tr>
+              <td>${esc(a.id)}</td>
+              <td>${esc(a.applicant_name) || '—'}</td>
+              <td>${esc(a.applicant_email) || '—'}</td>
+              <td>#${esc(a.job_id)} · ${esc(a.title)}</td>
+              <td>${esc(a.company)}</td>
+              <td>${a.created_at ? new Date(a.created_at).toLocaleString() : '—'}</td>
+              <td><span class="status-badge">${esc(a.status)}</span></td>
+              <td>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <select data-id="${esc(a.id)}" class="statusSel">
+                    <option value="APPLIED" ${a.status==='APPLIED'?'selected':''}>APPLIED</option>
+                    <option value="ACCEPTED" ${a.status==='ACCEPTED'?'selected':''}>ACCEPTED</option>
+                    <option value="REJECTED" ${a.status==='REJECTED'?'selected':''}>REJECTED</option>
+                    <option value="HIRED" ${a.status==='HIRED'?'selected':''}>HIRED</option>
+                  </select>
+                  <button class="primary updBtn" data-id="${esc(a.id)}">Guardar</button>
+                </div>
+              </td>
+            </tr>
+          `).join('');
+        }
 
-      // paginador
-      $('#pageInfo').textContent = state.lastCount ? `Mostrando ${state.offset+1}–${state.offset+state.lastCount}` : '—';
-      $('#prevBtn').disabled = state.offset <= 0;
-      $('#nextBtn').disabled = state.lastCount < state.limit;
+        // Info y paginador
+        $('#appsInfo').textContent = status ? `Filtro: ${status}` : '';
+        $('#pageInfo').textContent = state.lastCount
+          ? `Mostrando ${state.offset+1}–${state.offset+state.lastCount}`
+          : '—';
+        $('#prevBtn').disabled = state.offset <= 0;
+        $('#nextBtn').disabled = state.lastCount < state.limit;
 
-      // bind cambios
-      document.querySelectorAll('.updBtn').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          const id = btn.dataset.id;
-          const sel = document.querySelector(`.statusSel[data-id="${id}"]`);
-          const status = sel.value;
-          const ok = confirm(`¿Actualizar postulación #${id} a ${status}?`);
-          if (!ok) return;
-          const r = await fetch(`/api/admin/applications/${id}`, {
-            method:'PATCH',
-            headers: { 'Content-Type':'application/json' },
-            body: JSON.stringify({ status })
+        // Bind actualizaciones
+        document.querySelectorAll('.updBtn').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            const id = btn.dataset.id;
+            const sel = document.querySelector(`.statusSel[data-id="${CSS.escape(id)}"]`);
+            const newStatus = sel.value;
+            if (!confirm(`¿Actualizar postulación #${id} a ${newStatus}?`)) return;
+
+            try{
+              const r = await fetch(`/api/admin/applications/${encodeURIComponent(id)}`, {
+                method:'PATCH',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ status: newStatus })
+              });
+              const j = await r.json().catch(()=> ({}));
+              if (!r.ok){
+                alert(j.msg || 'Error actualizando');
+                return;
+              }
+              await loadApps();
+            }catch(err){
+              alert('Error de red al actualizar');
+            }
           });
-          const j = await r.json();
-          if (!r.ok) alert(j.msg || 'Error actualizando');
-          await loadApps();
         });
-      });
+      }catch(e){
+        console.error('loadApps error:', e);
+        $('#appsBody').innerHTML = `<tr><td colspan="8" class="muted">Error cargando.</td></tr>`;
+      }
     }
 
-    // eventos
-    $('#refreshBtn')?.addEventListener('click', ()=>{ state.offset=0; loadApps(); });
-    $('#statusFilter')?.addEventListener('change', ()=>{ state.offset=0; loadApps(); });
-    $('#prevBtn')?.addEventListener('click', ()=>{ state.offset=Math.max(0, state.offset - state.limit); loadApps(); });
-    $('#nextBtn')?.addEventListener('click', ()=>{ state.offset=state.offset + state.limit; loadApps(); });
+    // Controles
+    document.addEventListener('click', (ev)=>{
+      if (ev.target.id==='refreshBtn'){ state.offset=0; loadApps(); }
+      if (ev.target.id==='prevBtn'){ state.offset=Math.max(0, state.offset - state.limit); loadApps(); }
+      if (ev.target.id==='nextBtn'){ state.offset=state.offset + state.limit; loadApps(); }
+    });
+    document.addEventListener('change', (ev)=>{
+      if (ev.target.id==='statusFilter'){ state.offset=0; loadApps(); }
+    });
 
     (async function init(){
       await me();

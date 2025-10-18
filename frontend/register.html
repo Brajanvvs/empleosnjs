@@ -1,57 +1,135 @@
-<div style="display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; background-color: #eef2f7;">
-  <div style="text-align: center; margin-bottom: 20px;">
-    <img src="img/logo.png" alt="Logo" style="max-width: 150px;">
-  </div>
-  <h2 style="text-align: center; color: #2c3e50;">Registro</h2>
-  <form id="registerForm" style="max-width: 400px; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); box-sizing: border-box; text-align: center;">
-    <input type="text" placeholder="Nombre" id="name" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-    <input type="email" placeholder="Correo" id="email" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-    <input type="password" placeholder="Contraseña" id="password" required style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;">
-    <button type="submit" style="width: 100%; background-color: #1abc9c; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Registrarse</button>
-  </form>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registro • Portal Empleos</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/js/nav.js" defer></script>
+  <style>
+    .auth-wrap{
+      min-height: calc(100dvh - 140px);
+      display:grid; place-items:center; padding:20px;
+    }
+    .auth-card{
+      width:min(420px, 94vw);
+      text-align:center;
+    }
+    .logo-top{ margin-bottom:10px; }
+    .logo-top img{ width:72px; height:72px; border-radius:12px; object-fit:cover; }
+    .row{ display:grid; gap:10px; }
+    .hint{ font-size:12px; color:var(--muted); margin-top:6px; }
+    .actions{ display:grid; gap:10px; margin-top:6px; }
+    .alt{ margin-top:12px; font-size:14px; }
+    .alt a{ color:var(--brand-2); text-decoration:none; font-weight:700; }
+    .pw-wrap{ position:relative; }
+    .pw-toggle{
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      border:none; background:transparent; cursor:pointer; color:#46617c;
+      font-weight:700;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header global (se completa vía nav.js) -->
+  <header id="appHeader"></header>
 
-<script>
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const btn = e.target.querySelector('button');
-  btn.disabled = true;
+  <main class="auth-wrap">
+    <section class="card auth-card">
+      <div class="logo-top">
+        <img src="/img/logo.png" alt="Logo">
+      </div>
+      <h2 style="margin:0 0 12px">Crear cuenta</h2>
 
-  const data = {
-    name: document.getElementById('name').value.trim(),
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value
-  };
+      <form id="registerForm" class="row" novalidate>
+        <input type="text" id="name" placeholder="Nombre" autocomplete="name" required />
 
-  try {
-    // Usa la ruta correcta
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+        <input type="email" id="email" placeholder="Correo" autocomplete="email" required />
+
+        <div class="pw-wrap">
+          <input type="password" id="password" placeholder="Contraseña (mínimo 6)" minlength="6" required />
+          <button type="button" class="pw-toggle" id="togglePw">👁</button>
+        </div>
+
+        <div class="actions">
+          <button class="btn" type="submit">Registrarse</button>
+        </div>
+        <div id="msg" class="hint"></div>
+      </form>
+
+      <div class="alt">
+        ¿Ya tienes cuenta? <a href="/login.html">Inicia sesión</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer global -->
+  <footer id="appFooter"></footer>
+
+  <script>
+    // Mostrar/ocultar contraseña
+    const pw = document.getElementById('password');
+    const tgl = document.getElementById('togglePw');
+    tgl.addEventListener('click', () => {
+      pw.type = pw.type === 'password' ? 'text' : 'password';
+      tgl.textContent = pw.type === 'password' ? '👁' : '🙈';
     });
 
-    const result = await res.json();
+    const form = document.getElementById('registerForm');
+    const msg  = document.getElementById('msg');
 
-    if (res.ok) {
-      alert(result.message || 'Registro exitoso');
-      // Guarda algo mínimo opcionalmente
-      const user = { id: result.userId ?? null, name: data.name, role: 'USER' };
-      localStorage.setItem('user', JSON.stringify(user));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
 
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get('next') || '/';
-      window.location.href = next;
-    } else {
-      alert(result.error || 'Error al registrar');
-    }
-  } catch (err) {
-    console.error('Error en fetch:', err);
-    alert('No se pudo conectar con el servidor');
-  } finally {
-    btn.disabled = false;
-  }
-});
-</script>
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
 
+      const data = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value
+      };
 
+      if (!data.name || !data.email || !data.password) {
+        msg.textContent = 'Completa todos los campos.';
+        btn.disabled = false;
+        return;
+      }
+      if (data.password.length < 6) {
+        msg.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+        btn.disabled = false;
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          // opcional: persistimos algo mínimo para UI
+          const user = { id: result.userId ?? null, name: data.name, role: 'USER' };
+          try { localStorage.setItem('user', JSON.stringify(user)); } catch {}
+
+          alert(result.message || 'Registro exitoso');
+          const params = new URLSearchParams(window.location.search);
+          const next = params.get('next') || '/';
+          window.location.href = next;
+        } else {
+          msg.textContent = result.error || 'Error al registrar';
+        }
+      } catch (err) {
+        console.error('fetch error:', err);
+        msg.textContent = 'No se pudo conectar con el servidor.';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
