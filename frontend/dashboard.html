@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Empresa</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; background:#f5f7fb; margin:0; }
+    header { background:#1abc9c; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    header a { color:#fff; text-decoration:none; font-weight:600; }
+    main { max-width:1000px; margin:28px auto; padding:0 16px; }
+    h2 { margin:8px 0 12px; color:#2c3e50; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+    @media (max-width:900px){ .grid { grid-template-columns: 1fr; } }
+    .card { background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:16px; }
+    input, textarea { width:100%; padding:10px 12px; border:1px solid #dfe6e9; border-radius:8px; background:#fbfbfb; outline:none; }
+    textarea { min-height:110px; resize:vertical; }
+    input:focus, textarea:focus { border-color:#1abc9c; background:#fff; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .actions { display:flex; gap:8px; margin-top:10px; flex-wrap: wrap; }
+    button { background:#1abc9c; border:none; color:#fff; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+    button.ghost { background:#ecf0f1; color:#2c3e50; }
+    ul { list-style:none; padding:0; margin:0; }
+    .job { border:1px solid #eee; border-radius:10px; padding:12px; margin-bottom:10px; }
+    .meta { color:#6c7a89; font-size:13px; }
+    .pill { background:#ecf0f1; border-radius:999px; padding:4px 8px; font-size:12px; }
+    .empty { color:#7f8c8d; }
+    .muted { color:#7f8c8d; font-size:13px; }
+
+    /* Botones de estado */
+    .hire-btn { background:#27ae60; }
+    .reject-btn { background:#e74c3c; }
+    .review-btn { background:#f39c12; color:#fff; }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">← Portal de Empleos</a>
+    <div>
+      <span id="who"></span>
+      <button id="logoutBtn" class="ghost" style="margin-left:8px;">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <!-- Crear empleo -->
+      <section class="card">
+        <h2>Publicar empleo</h2>
+        <div class="row">
+          <input id="title" placeholder="Título (p. ej. Jardinero)">
+          <input id="salary" type="number" min="0" placeholder="Salario (opcional)">
+        </div>
+        <textarea id="description" placeholder="Descripción del cargo" style="margin-top:10px;"></textarea>
+        <div class="actions">
+          <button id="createBtn">Publicar</button>
+          <button id="clearBtn" class="ghost">Limpiar</button>
+        </div>
+        <div id="formMsg" class="muted" style="margin-top:8px;"></div>
+      </section>
+
+      <!-- Mis empleos -->
+      <section class="card">
+        <h2>Mis empleos publicados</h2>
+        <ul id="mineList"><li class="empty">Cargando…</li></ul>
+      </section>
+    </div>
+
+    <!-- Candidatos -->
+    <section class="card" style="margin-top:18px;">
+      <h2>Candidatos del empleo <span id="jobHeader" class="pill" style="display:none;"></span></h2>
+      <div id="appsBox" class="muted">Selecciona un empleo para ver sus postulaciones.</div>
+      <ul id="appsList" style="margin-top:10px;"></ul>
+    </section>
+  </main>
+
+  <script>
+    const state = { user:null, selectedJob:null };
+
+    // Util
+    const $ = (sel) => document.querySelector(sel);
+    const fmtMoney = (n) => n == null || n === '' ? '—' : new Intl.NumberFormat('es-CO').format(Number(n));
+
+    // Sesión
+    async function fetchMe(){
+      const r = await fetch('/api/auth/me');
+      const data = await r.json();
+      state.user = data.user || null;
+
+      if (!state.user) {
+        alert('Debes iniciar sesión como EMPRESA.');
+        location.href = '/login.html?next=/dashboard.html';
+        return;
+      }
+      if (state.user.role !== 'EMPLOYER') {
+        alert('Solo las empresas pueden usar el dashboard.');
+        location.href = '/';
+        return;
+      }
+      $('#who').textContent = `${state.user.name || 'Empresa'}`;
+    }
+
+    async function logout(){
+      try { await fetch('/api/auth/logout', { method:'POST' }); } catch {}
+      localStorage.removeItem('user');
+      location.href = '/';
+    }
+
+    // Crear empleo
+    async function createJob(){
+      const t = $('#title').value.trim();
+      const d = $('#description').value.trim();
+      const s = $('#salary').value.trim();
+
+      if (!t || !d) { setFormMsg('Título y descripción son obligatorios'); return; }
+      setFormMsg('Publicando…');
+
+      const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ title: t, description: d, salary: s ? Number(s) : null })
+      });
+
+      const json = await res.json();
+      if (!res.ok) { setFormMsg(json.msg || json.error || 'Error publicando'); return; }
+
+      setFormMsg('Publicado ✅');
+      $('#title').value = ''; $('#description').value = ''; $('#salary').value = '';
+      loadMine();
+    }
+    function setFormMsg(t){ $('#formMsg').textContent = t || ''; }
+
+    // Mis empleos
+    async function loadMine(){
+      const list = $('#mineList');
+      list.innerHTML = '<li class="empty">Cargando…</li>';
+
+      const r = await fetch('/api/jobs/mine');
+      const data = await r.json();
+      const jobs = data.jobs || [];
+
+      if (!jobs.length) { list.innerHTML = '<li class="empty">Aún no has publicado empleos.</li>'; return; }
+
+      list.innerHTML = jobs.map(j => `
+        <li class="job">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <div>
+              <div><b>${j.title}</b></div>
+              <div class="meta">Salario: ${fmtMoney(j.salary)} · Publicado: ${new Date(j.created_at).toLocaleDateString()}</div>
+            </div>
+            <div class="actions">
+              <button data-job="${j.id}" class="see-btn">Ver candidatos</button>
+            </div>
+          </div>
+        </li>
+      `).join('');
+
+      document.querySelectorAll('.see-btn').forEach(b=>{
+        b.addEventListener('click', () => loadApplicants(Number(b.dataset.job)));
+      });
+    }
+
+    // Ver candidatos por job (con botones de estado)
+    async function loadApplicants(jobId){
+      state.selectedJob = jobId;
+      $('#appsBox').textContent = 'Cargando candidatos…';
+      $('#appsList').innerHTML = '';
+
+      const hdr = $('#jobHeader');
+      hdr.style.display = 'inline-block';
+      hdr.textContent = `#${jobId}`;
+
+      const r = await fetch(`/api/applications/by-job/${jobId}`);
+      const data = await r.json();
+      const apps = data.applications || data || [];
+
+      if (!Array.isArray(apps) || !apps.length){
+        $('#appsBox').textContent = 'Este empleo aún no tiene postulaciones.';
+        return;
+      }
+      $('#appsBox').textContent = '';
+
+      $('#appsList').innerHTML = apps.map(a => {
+        const status = a.status || 'APPLIED';
+        const disabledHire = status === 'HIRED' ? 'disabled' : '';
+        const disabledReject = status === 'REJECTED' ? 'disabled' : '';
+        const disabledReview = status === 'REVIEWING' ? 'disabled' : '';
+        return `
+          <li class="job" data-app="${a.application_id}">
+            <div style="display:flex; justify-content:space-between; align-items:start; gap:10px;">
+              <div>
+                <div><b>${a.applicant_name || 'Usuario'}</b> <span class="meta">(${a.applicant_email || '—'})</span></div>
+                <div class="meta">Postulado: ${new Date(a.created_at).toLocaleString()}</div>
+                <div class="meta">Estado actual: <span class="pill">${status}</span></div>
+              </div>
+              <div class="actions">
+                <button class="review-btn" ${disabledReview}>Revisando</button>
+                <button class="hire-btn" ${disabledHire}>Contratar</button>
+                <button class="reject-btn" ${disabledReject}>Rechazar</button>
+              </div>
+            </div>
+          </li>
+        `;
+      }).join('');
+
+      // Vincular acciones
+      document.querySelectorAll('.hire-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const appId = Number(e.target.closest('[data-app]').dataset.app);
+          await updateStatus(appId, 'HIRED');
+        });
+      });
+      document.querySelectorAll('.reject-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const appId = Number(e.target.closest('[data-app]').dataset.app);
+          if (!confirm('¿Rechazar esta postulación?')) return;
+          await updateStatus(appId, 'REJECTED');
+        });
+      });
+      document.querySelectorAll('.review-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const appId = Number(e.target.closest('[data-app]').dataset.app);
+          await updateStatus(appId, 'REVIEWING');
+        });
+      });
+    }
+
+    // Cambiar estado (PATCH /api/applications/:id)
+    async function updateStatus(appId, status){
+      try {
+        const r = await fetch(`/api/applications/${appId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ status })
+        });
+        const j = await r.json();
+        if (!r.ok) {
+          alert(j.msg || j.error || 'No se pudo actualizar el estado');
+          return;
+        }
+        // recargar candidatos del job actual
+        await loadApplicants(state.selectedJob);
+      } catch (e) {
+        console.error('updateStatus error:', e);
+        alert('Error de red al cambiar el estado');
+      }
+    }
+
+    // Eventos
+    $('#createBtn').addEventListener('click', createJob);
+    $('#clearBtn').addEventListener('click', ()=>{ $('#title').value=''; $('#description').value=''; $('#salary').value=''; setFormMsg(''); });
+    $('#logoutBtn').addEventListener('click', logout);
+
+    // Init
+    (async function(){
+      await fetchMe();
+      await loadMine();
+    })();
+  </script>
+</body>
+</html>

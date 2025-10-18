@@ -1,69 +1,166 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Mis Postulaciones</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Postulaciones - Portal de Empleos</title>
   <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { background:#f5f7fb; font-family: system-ui, Arial, sans-serif; margin:0; }
+    header { background:#1abc9c; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    header a { color:#fff; text-decoration:none; font-weight:600; }
+    main { max-width:980px; margin:28px auto; padding:0 16px; }
+    h1 { margin:0; font-size:20px; }
+    nav { display:flex; gap:10px; align-items:center; }
+    .btn { background:#1abc9c; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; }
+    .btn.ghost { background:#ecf0f1; color:#2c3e50; }
+    .list { margin: 18px 0 40px; }
+    .card { background:#fff; border:1px solid #eaeaea; border-radius:12px; box-shadow:0 8px 22px rgba(0,0,0,.05); padding:16px; margin:12px 0; }
+    .row { display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+    .meta { color:#6c7a89; font-size:13px; }
+    .pill { font-size:12px; padding:4px 10px; border-radius:999px; font-weight:700; letter-spacing:.2px; display:inline-block; }
+    .st-applied   { background:#dfe6e9; color:#2c3e50; }
+    .st-reviewing { background:#f6d6a6; color:#8a5a00; }
+    .st-hired     { background:#bdebd1; color:#0c6d2d; }
+    .st-rejected  { background:#f5b7b1; color:#7b241c; }
+    .salary { font-weight:600; }
+    .actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .danger { background:#e74c3c; color:#fff; }
+    .muted { color:#7f8c8d; }
+    footer { text-align:center; margin-top:50px; padding:10px; background:#34495e; color:#fff; }
+    .empty { color:#7f8c8d; background:#fff; border:1px dashed #cfd8dc; border-radius:10px; padding:16px; text-align:center; }
+  </style>
 </head>
 <body>
-  <h2 style="text-align: center; color: #2c3e50;">Mis Postulaciones</h2>
-  <div id="applications" style="max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"></div>
-  <p style="text-align: center; margin-top: 20px;"><a href="/index.html" style="color: #1abc9c; text-decoration: none;">Volver a ofertas</a></p>
+  <header>
+    <h1>Mis Postulaciones</h1>
+    <nav>
+      <a href="/" class="btn ghost">🏠 Inicio</a>
+      <button id="logoutBtn" class="btn">Cerrar sesión</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="appsList" class="list">
+      <p class="muted">Cargando tus postulaciones...</p>
+    </section>
+  </main>
+
+  <footer>
+    <small>© Portal Empleos - Corredor Ecológico 2025</small>
+  </footer>
 
   <script>
-  async function fetchApps(userId) {
-    const res = await fetch(`/api/applications?user_id=${userId}`);
-    if (!res.ok) throw new Error('Error al obtener postulaciones');
-    return res.json();
-  }
+    const state = { user: null };
 
-  function render(apps) {
-    const container = document.getElementById('applications');
-    if (!apps || apps.length === 0) { container.innerHTML = '<p>No tienes postulaciones.</p>'; return; }
-    container.innerHTML = '';
-    apps.forEach(a => {
-      const div = document.createElement('div');
-      div.className = 'application';
-      div.innerHTML = `
-        <h3>${a.title} - ${a.company}</h3>
-        <p>${a.location}</p>
-        <p>${a.description}</p>
-        <p>Postulado: ${new Date(a.created_at).toLocaleString()}</p>
-        <button data-id="${a.application_id}">Eliminar</button>
-      `;
-      container.appendChild(div);
-    });
-  }
+    const fmtMoney = (n) => {
+      if (n == null || n === '' || isNaN(Number(n))) return '—';
+      return new Intl.NumberFormat('es-CO', { style:'currency', currency:'COP', maximumFractionDigits:0 }).format(Number(n));
+    };
+    const fmtDate = (d) => new Date(d).toLocaleString();
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (!user || !user.id) {
-      if (confirm('Necesitas iniciar sesión para ver tus postulaciones. Ir a login?')) window.location.href = '/login.html';
-      return;
+    function badge(status){
+      const s = (status || 'APPLIED').toUpperCase();
+      if (s === 'REVIEWING') return '<span class="pill st-reviewing">REVIEWING</span>';
+      if (s === 'HIRED')     return '<span class="pill st-hired">HIRED</span>';
+      if (s === 'REJECTED')  return '<span class="pill st-rejected">REJECTED</span>';
+      return '<span class="pill st-applied">APPLIED</span>';
+    }
+    function cancellable(status){
+      const s = (status || 'APPLIED').toUpperCase();
+      return s === 'APPLIED' || s === 'REVIEWING';
     }
 
-    try {
-      const apps = await fetchApps(user.id);
-      render(apps);
-    } catch (e) { console.error(e); alert('No se pudieron cargar las postulaciones'); }
-
-    document.getElementById('applications').addEventListener('click', async (e) => {
-      if (e.target.tagName === 'BUTTON') {
-        const id = e.target.getAttribute('data-id');
-        if (!confirm('¿Eliminar postulación?')) return;
-        try {
-          const res = await fetch(`/api/applications/${id}?user_id=${user.id}`, { method: 'DELETE' });
-          const json = await res.json();
-          if (!res.ok) throw new Error(json.error || 'Error');
-          alert(json.message || 'Eliminada');
-          // refrescar
-          const apps = await fetchApps(user.id);
-          render(apps);
-        } catch (err) { console.error(err); alert('No se pudo eliminar'); }
+    async function fetchSession() {
+      try {
+        const r = await fetch('/api/auth/me');
+        const data = await r.json();
+        state.user = data.user || null;
+        if (!state.user) {
+          alert('Debes iniciar sesión para ver tus postulaciones.');
+          location.href = '/login.html?next=/applications.html';
+          return;
+        }
+        renderLogout();
+        loadApplications();
+      } catch (e) {
+        console.error(e);
+        document.getElementById('appsList').innerHTML = '<p class="empty">No pudimos verificar tu sesión.</p>';
       }
-    });
-  });
+    }
+
+    function renderLogout() {
+      const btn = document.getElementById('logoutBtn');
+      btn.onclick = async () => {
+        try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+        localStorage.removeItem('user');
+        location.href = '/';
+      };
+    }
+
+    async function loadApplications() {
+      const list = document.getElementById('appsList');
+      try {
+        const r = await fetch('/api/applications/mine');
+        const data = await r.json();
+
+        const apps = data.applications || data; // backend devuelve { ok, applications } (nuestro caso)
+        if (!Array.isArray(apps) || !apps.length) {
+          list.innerHTML = '<div class="empty">No tienes postulaciones aún. <br/>Visita la página de inicio para postularte a un empleo.</div>';
+          return;
+        }
+
+        list.innerHTML = apps.map(appCard).join('');
+        bindCancelButtons();
+      } catch (e) {
+        console.error('loadApplications error:', e);
+        list.innerHTML = '<p class="empty">Error cargando tus postulaciones.</p>';
+      }
+    }
+
+    function appCard(a) {
+      const canCancel = cancellable(a.status);
+      return `
+        <article class="card">
+          <div class="row">
+            <div>
+              <h3 style="margin:0 0 6px">${a.title}</h3>
+              <div class="meta">Empresa: <b>${a.company}</b> · Ubicación: ${a.location || '—'}</div>
+              <div class="meta">Salario: <span class="salary">${fmtMoney(a.salary)}</span></div>
+              <div class="meta">Postulado: ${fmtDate(a.created_at)}</div>
+            </div>
+            <div class="actions">
+              <div>Estado: ${badge(a.status)}</div>
+              ${canCancel ? `<button class="btn danger cancel-btn" data-id="${a.application_id}">❌ Cancelar</button>` : ''}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function bindCancelButtons() {
+      document.querySelectorAll('.cancel-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          if (!confirm('¿Deseas cancelar esta postulación?')) return;
+          try {
+            const r = await fetch(`/api/applications/${id}`, { method: 'DELETE' });
+            const j = await r.json().catch(()=>({}));
+            if (r.ok) {
+              // refrescar lista
+              await loadApplications();
+            } else {
+              alert(j.error || j.msg || 'Error al eliminar.');
+            }
+          } catch (e) {
+            console.error(e);
+            alert('Error de red al eliminar.');
+          }
+        });
+      });
+    }
+
+    fetchSession();
   </script>
 </body>
 </html>

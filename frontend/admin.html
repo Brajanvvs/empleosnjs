@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin • Portal Empleos</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; background:#f5f7fb; margin:0; }
+    header { background:#34495e; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    header a { color:#fff; text-decoration:none; font-weight:600; }
+    main { max-width:1100px; margin:28px auto; padding:0 16px; }
+    h2 { margin:8px 0 12px; color:#2c3e50; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+    @media (max-width:900px){ .grid { grid-template-columns: 1fr; } }
+    .card { background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:16px; }
+    .kpi { display:flex; gap:10px; flex-wrap:wrap; }
+    .pill { background:#ecf0f1; border-radius:999px; padding:6px 10px; font-weight:600; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
+    select, button { padding:8px 10px; border-radius:8px; border:1px solid #dfe6e9; background:#fff; cursor:pointer; }
+    button.primary { background:#1abc9c; color:#fff; border:none; }
+    .toolbar { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+    .muted{ color:#7f8c8d; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">← Portal</a>
+    <div>
+      <span id="who"></span>
+      <button id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Métricas</h2>
+      <div id="kpis" class="kpi muted">Cargando…</div>
+    </section>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>Postulaciones</h2>
+      <div class="toolbar">
+        <label>Estado:
+          <select id="statusFilter">
+            <option value="">Todas</option>
+            <option>APPLIED</option>
+            <option>ACCEPTED</option>
+            <option>REJECTED</option>
+            <option>HIRED</option>
+          </select>
+        </label>
+        <button id="refreshBtn" class="primary">Actualizar</button>
+      </div>
+
+      <div class="muted" id="appsInfo"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Empleo</th>
+            <th>Empresa</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="appsBody">
+          <tr><td colspan="8" class="muted">Cargando…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="toolbar" style="justify-content:space-between; margin-top:10px;">
+        <button id="prevBtn">← Anterior</button>
+        <span id="pageInfo" class="muted"></span>
+        <button id="nextBtn" class="primary">Siguiente →</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = { user:null, limit:20, offset:0, lastCount:0 };
+
+    const $ = s => document.querySelector(s);
+
+    async function me(){
+      const r = await fetch('/api/auth/me'); const d = await r.json();
+      state.user = d.user || null;
+      if (!state.user || state.user.role !== 'ADMIN'){
+        alert('Solo ADMIN puede entrar aquí.');
+        location.href = '/';
+        return;
+      }
+      $('#who').textContent = state.user.name || 'Admin';
+      $('#logoutBtn').onclick = async () => { try{ await fetch('/api/auth/logout',{method:'POST'}) }catch{}; location.href='/'; };
+    }
+
+    async function loadMetrics(){
+      $('#kpis').textContent = 'Cargando…';
+      const r = await fetch('/api/admin/metrics'); const d = await r.json();
+      if (!d.ok){ $('#kpis').textContent = 'Error cargando métricas'; return; }
+      const m = d.metrics;
+      $('#kpis').innerHTML = `
+        <span class="pill">Usuarios: ${m.users}</span>
+        <span class="pill">Empresas: ${m.companies}</span>
+        <span class="pill">Empleos: ${m.jobs}</span>
+        <span class="pill">Postulaciones: ${m.apps}</span>
+      `;
+    }
+
+    async function loadApps(){
+      const status = $('#statusFilter').value.trim();
+      const params = new URLSearchParams({
+        limit: String(state.limit),
+        offset: String(state.offset)
+      });
+      if (status) params.set('status', status);
+
+      $('#appsBody').innerHTML = `<tr><td colspan="8" class="muted">Cargando…</td></tr>`;
+      const r = await fetch(`/api/admin/applications?${params.toString()}`);
+      const d = await r.json();
+      const apps = d.applications || [];
+      state.lastCount = apps.length;
+
+      if (!apps.length){
+        $('#appsBody').innerHTML = `<tr><td colspan="8" class="muted">Sin resultados</td></tr>`;
+      } else {
+        $('#appsBody').innerHTML = apps.map(a => `
+          <tr>
+            <td>${a.id}</td>
+            <td>${a.applicant_name || '—'}</td>
+            <td>${a.applicant_email || '—'}</td>
+            <td>#${a.job_id} · ${a.title}</td>
+            <td>${a.company}</td>
+            <td>${new Date(a.created_at).toLocaleString()}</td>
+            <td><b>${a.status}</b></td>
+            <td>
+              <select data-id="${a.id}" class="statusSel">
+                <option ${a.status==='APPLIED'?'selected':''}>APPLIED</option>
+                <option ${a.status==='ACCEPTED'?'selected':''}>ACCEPTED</option>
+                <option ${a.status==='REJECTED'?'selected':''}>REJECTED</option>
+                <option ${a.status==='HIRED'?'selected':''}>HIRED</option>
+              </select>
+              <button class="primary updBtn" data-id="${a.id}" style="margin-left:6px;">Guardar</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // paginador
+      $('#pageInfo').textContent = state.lastCount ? `Mostrando ${state.offset+1}–${state.offset+state.lastCount}` : '—';
+      $('#prevBtn').disabled = state.offset <= 0;
+      $('#nextBtn').disabled = state.lastCount < state.limit;
+
+      // bind cambios
+      document.querySelectorAll('.updBtn').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const id = btn.dataset.id;
+          const sel = document.querySelector(`.statusSel[data-id="${id}"]`);
+          const status = sel.value;
+          const ok = confirm(`¿Actualizar postulación #${id} a ${status}?`);
+          if (!ok) return;
+          const r = await fetch(`/api/admin/applications/${id}`, {
+            method:'PATCH',
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify({ status })
+          });
+          const j = await r.json();
+          if (!r.ok) alert(j.msg || 'Error actualizando');
+          await loadApps();
+        });
+      });
+    }
+
+    // eventos
+    $('#refreshBtn')?.addEventListener('click', ()=>{ state.offset=0; loadApps(); });
+    $('#statusFilter')?.addEventListener('change', ()=>{ state.offset=0; loadApps(); });
+    $('#prevBtn')?.addEventListener('click', ()=>{ state.offset=Math.max(0, state.offset - state.limit); loadApps(); });
+    $('#nextBtn')?.addEventListener('click', ()=>{ state.offset=state.offset + state.limit; loadApps(); });
+
+    (async function init(){
+      await me();
+      await loadMetrics();
+      await loadApps();
+    })();
+  </script>
+</body>
+</html>

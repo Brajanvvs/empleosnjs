@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Detalle de empleo</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; background:#f5f7fb; margin:0; }
+    header { background:#1abc9c; color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; }
+    header a { color:#fff; text-decoration:none; font-weight:600; }
+    main { max-width:900px; margin:28px auto; padding:0 16px; }
+    .card { background:#fff; border-radius:12px; box-shadow:0 10px 24px rgba(0,0,0,.06); padding:18px; }
+    .meta { color:#6c7a89; font-size:13px; }
+    .pill { background:#ecf0f1; border-radius:999px; padding:4px 10px; font-size:12px; display:inline-block; }
+    .btn { background:#1abc9c; color:#fff; border:none; border-radius:8px; padding:10px 12px; cursor:pointer; font-weight:600; }
+    .btn.ghost { background:#ecf0f1; color:#2c3e50; }
+    .muted { color:#7f8c8d; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">← Volver</a>
+    <div id="headRight" class="muted"></div>
+  </header>
+
+  <main>
+    <section id="jobBox" class="card">
+      <p class="muted">Cargando empleo…</p>
+    </section>
+
+    <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="applyBtn" class="btn">Postularme</button>
+      <a id="appsLink" href="/applications.html" class="btn ghost" style="display:none;">Ver mis postulaciones</a>
+    </div>
+  </main>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const params = new URLSearchParams(location.search);
+    const jobId = Number(params.get('id'));
+    const fmtMoney = n => (n==null||n==='') ? '—' : new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Number(n));
+    let me = null;
+
+    if (!jobId) {
+      $('#jobBox').innerHTML = '<p class="muted">Falta el parámetro <b>id</b> del empleo.</p>';
+      $('#applyBtn').disabled = true;
+    }
+
+    async function fetchMe(){
+      try {
+        const r = await fetch('/api/auth/me');
+        const j = await r.json();
+        me = j.user || null;
+        if (me) {
+          $('#headRight').textContent = `${me.name || ''} · ${me.role || ''}`;
+          if (me.role === 'USER') {
+            $('#appsLink').style.display = 'inline-block';
+          }
+        } else {
+          $('#headRight').innerHTML = '<a href="/login.html">Iniciar sesión</a>';
+        }
+      } catch {}
+    }
+
+    async function loadJob(){
+      const box = $('#jobBox');
+      try {
+        const r = await fetch(`/api/jobs/${jobId}`);
+        const j = await r.json();
+        if (!r.ok || !j.ok) throw new Error(j.msg || 'error');
+
+        const job = j.job;
+        box.innerHTML = `
+          <h2 style="margin:0 0 8px">${job.title}</h2>
+          <div class="meta">${job.company} · ${job.location || '—'} · Publicado: ${new Date(job.created_at).toLocaleDateString()}</div>
+          <div style="margin:10px 0"><span class="pill">Salario: ${fmtMoney(job.salary)}</span></div>
+          <p style="white-space:pre-wrap;line-height:1.5">${job.description || ''}</p>
+        `;
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = '<p class="muted">No se pudo cargar el empleo.</p>';
+        $('#applyBtn').disabled = true;
+      }
+    }
+
+    async function apply(){
+      // Debe estar logueado como USER
+      if (!me) {
+        location.href = `/login.html?next=${encodeURIComponent(location.pathname + location.search)}`;
+        return;
+      }
+      if (me.role !== 'USER') {
+        alert('Solo los usuarios postulantes pueden aplicar a empleos.');
+        return;
+      }
+      try {
+        const r = await fetch('/api/applications', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ job_id: jobId })
+        });
+        const j = await r.json();
+        if (r.ok) {
+          alert('¡Postulación enviada!');
+          $('#appsLink').style.display = 'inline-block';
+        } else {
+          if (r.status === 409) {
+            alert('Ya te postulaste a este empleo.');
+            $('#appsLink').style.display = 'inline-block';
+          } else if (r.status === 401) {
+            // si la sesión expiró
+            location.href = `/login.html?next=${encodeURIComponent(location.pathname + location.search)}`;
+          } else {
+            alert(j.msg || j.error || 'No se pudo postular.');
+          }
+        }
+      } catch (e) {
+        console.error(e);
+        alert('Error de red al postular.');
+      }
+    }
+
+    $('#applyBtn').addEventListener('click', apply);
+
+    (async function init(){
+      await fetchMe();
+      if (jobId) await loadJob();
+    })();
+  </script>
+</body>
+</html>

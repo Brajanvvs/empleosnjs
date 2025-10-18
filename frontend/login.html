@@ -76,37 +76,49 @@
 
   <p>¿No tienes una cuenta? <a href="register.html">Regístrate aquí</a></p>
 
-  <script>
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-      email: document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value
-    };
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button');
+  btn.disabled = true;
 
-    try {
-      const res = await fetch('http://localhost:5000/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      const result = await res.json();
-      if (res.ok) {
-        // guardar usuario básico
-        const user = { id: result.user?.id || result.user?.id || null, name: result.user?.name || null, email: data.email };
-        localStorage.setItem('user', JSON.stringify(user));
-        alert(result.message || 'Login correcto');
-        const params = new URLSearchParams(window.location.search);
-        const next = params.get('next') || '/index.html';
-        window.location.href = next;
-      } else {
-        alert(result.error || 'Error al iniciar sesión');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('No se pudo conectar con el servidor');
+  const data = {
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value
+  };
+
+  try {
+    // Usa la ruta correcta
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // mismas origin: no hace falta credentials: 'include'
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      // Guarda algo mínimo si quieres para mostrar en UI,
+      // pero la sesión real está en el servidor (cookie).
+      const user = { id: result.user?.id ?? null, name: result.user?.name ?? '', role: result.user?.role ?? '' };
+      localStorage.setItem('user', JSON.stringify(user));
+
+      alert(result.message || 'Login correcto');
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next') || '/';
+      window.location.href = next;
+    } else {
+      alert(result.error || 'Error al iniciar sesión');
     }
-  });
-  </script>
+  } catch (err) {
+    console.error(err);
+    alert('No se pudo conectar con el servidor');
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+
 </body>
 </html>
